@@ -14,28 +14,9 @@
  * limitations under the License.
  */
 
-#include <io.h>
-
-#if defined(__MSP430_HAS_BC2__)
-static const uint8_t RSEL_MASK = RSEL3|RSEL2|RSEL1|RSEL0;
-static const uint8_t RSEL_MAXBIT = RSEL3;
-#else
-static const uint8_t RSEL_MASK = RSEL2|RSEL1|RSEL0;
-static const uint8_t RSEL_MAXBIT = RSEL2;
+#include <stdint.h>
+void copy_word(uint16_t *to, const uint16_t *from, uint16_t words);
+#if !defined(ARRAY_SIZE)
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #endif
 
-static inline uint8_t calib2dco(uint16_t calib) {
-    return calib & 0xff;
-}
-
-static inline uint8_t calib2rsel(uint16_t calib) {
-    return (calib >> 8) & RSEL_MASK;
-}
-
-static inline uint16_t rsel2calib(uint8_t rsel) {
-    return rsel << 8;
-}
-
-void dco_set(uint16_t calib);
-void dco_setup_calibrate(void);
-uint16_t dco_calibrate(uint16_t dco_khz);
