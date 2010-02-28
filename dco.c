@@ -1,3 +1,4 @@
+/* -*- mode: c; mode: flyspell-prog; -*- */
 /*
  * Copyright (C) 2010 Tadashi G. Takaoka
  *
@@ -16,6 +17,19 @@
 
 #include "dco.h"
 #include "delay.h"
+
+#if !defined(LFXT1_HZ)
+#define LFXT1_HZ 32768          /* 32.768kHz */
+#elif LFXT1_HZ < 1000
+#error "LFXT1_HZ is too low"
+#elif LFXT1_HZ > 40000
+#error "LFXT1_HZ is too high"
+#endif
+
+#if defined(ERRATA_DCOR)
+/* Only MSP430x20xx and MSP430x21xx do not have DCOR */
+#define DCOR                0x01    /* Enable External Resistor : 1 */
+#endif
 
 void dco_set(uint16_t calib) {
 #if defined(ERRATA_BCL12)
@@ -70,12 +84,12 @@ uint16_t dco_calibrate(uint16_t dco_khz) {
     uint16_t calib = 0;
     uint16_t step;
     for (step = rsel2calib(RSEL_MAXBIT); step >= DCO0; step >>= 1) {
-        if (dco_coarse(calib | step, dco_khz) > 32768/100)
+        if (dco_coarse(calib | step, dco_khz) >= LFXT1_HZ / 100)
             calib |= step;
     }
 
     for (step = rsel2calib(RSEL_MAXBIT); step != 0; step >>= 1) {
-        if (dco_fine(calib | step, dco_khz) > 32768) {
+        if (dco_fine(calib | step, dco_khz) >= LFXT1_HZ) {
             calib |= step;
         } else {
             calib &= ~step;
@@ -89,32 +103,48 @@ uint16_t dco_calibrate(uint16_t dco_khz) {
 }
 
 void dco_setup_calibrate() {
-    /* set default DCO */
-    dco_set(rsel2calib(RSEL_MAXBIT));  /* RSEL=MAX/2, DCO,MOD=0 */
-
     /* set LFXT1/32.768kHz XTAL oscillator */
     BCSCTL1 &= ~(XTS | DIVA1 | DIVA0); /* LF mode, ACLK=LFXT1CLK/1 */
 #if defined(__MSP430_HAS_BC2__)
+#if defined(ERRATA_XOSC8)
+    BCSCTL3 = LFXT1S_0 | XCAP_3; /* LFXT1=32.768kHz, CAP=12.5pF */
+#else
     BCSCTL3 = LFXT1S_0 | XCAP_2; /* LFXT1=32.768kHz, CAP=10pF */
+#endif
     P2SEL |= 0xc0;
 #endif
 
     /* turn on DCO and LFXT1 */
     _BIC_SR(SCG0 | OSCOFF);
 
+#if defined(__MSP430_HAS_BC2__)
     /* wait for oscillating */
     do {
         IFG1 &= ~OFIFG;
         delay_995();
     } while ((IFG1 & OFIFG) != 0);
-
-    /* MCLK=DCOCLK/1, SMCLK=DCOCLK/1, Rosc external */
-#if defined(__MSP430_HAS_BC2__)
-    BCSCTL2 = SELM_0 | DIVM_0 | DIVS_0;
 #else
+    /* In MSP430x1xx, OFIFG works only for LFXT1/HF mode or XT2 */
+    delay_1000n(100);
+#endif
+
+#if defined(USE_ROSC)
+    /* MCLK=DCOCLK/1, SMCLK=DCOCLK/1, external Rosc */
     BCSCTL2 = SELM_0 | DIVM_0 | DIVS_0 | DCOR;
+#else
+    /* MCLK=DCOCLK/1, SMCLK=DCOCLK/1, internal Rosc */
+    BCSCTL2 = SELM_0 | DIVM_0 | DIVS_0;
 #endif
 
     /* TimerA=ACLK/1, continuous mode, reset */
     TACTL = TASSEL_1 | ID_0 | MC_2 | TACLR;
 }
+
+/*
+ * Local Variables:
+ * c-file-style: "bsd"
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ * vim: set et ts=4 sw=4:
+ */

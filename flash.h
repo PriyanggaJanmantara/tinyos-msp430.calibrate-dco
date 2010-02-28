@@ -1,3 +1,4 @@
+/* -*- mode: c; mode: flyspell-prog; -*-*/
 /*
  * Copyright (C) 2010 Tadashi G. Takaoka
  *
@@ -23,3 +24,12 @@ void flash_write_block(const uint16_t *from, uint16_t *to, uint16_t words);
 #if 0
 void flash_write_word(uint16_t data, uintptr_t addr);
 #endif
+
+/*
+ * Local Variables:
+ * c-file-style: "bsd"
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ * vim: set et ts=4 sw=4:
+ */

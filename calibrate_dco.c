@@ -1,3 +1,4 @@
+/* -*- mode: c; mode: flyspell-prog; -*- */
 /*
  * Copyright (C) 2010 Tadashi G. Takaoka
  *
@@ -19,19 +20,21 @@
 #include "delay.h"
 #include "copy.h"
 
+#include "check_freq.h"
+
 #if defined(__MSP430_HAS_FLASH2__)
 #define SEGMENT_A 0x10c0
 uint16_t backup_segment_a[32];  /* 64 bytes */
-#define INDEX_16MHZ 28
-#define INDEX_12MHZ 29
-#define INDEX_8MHZ 30
+#define INDEX_FREQ4 28
+#define INDEX_FREQ3 29
+#define INDEX_FREQ2 30
 #define INDEX_1MHZ 31
-#else
+#else  /* !defined(__MSP430_HAS_FLASH2__) */
 #define SEGMENT_A 0x1080
 uint16_t backup_segment_a[64];  /* 128 byte */
-#define INDEX_4MHZ 60
-#define INDEX_2MHZ 61
-#define INDEX_8MHZ 62
+#define INDEX_FREQ4 60
+#define INDEX_FREQ3 61
+#define INDEX_FREQ2 62
 #define INDEX_1MHZ 63
 #endif
 
@@ -57,17 +60,10 @@ int main() {
     copy_word(backup_segment_a, (const uint16_t *)SEGMENT_A, ARRAY_SIZE(backup_segment_a));
 
     dco_setup_calibrate();
-#if defined(__MSP430_HAS_BC2__)
     backup_segment_a[INDEX_1MHZ] = dco_calibrate(1000); /* 1MHz */
-    backup_segment_a[INDEX_8MHZ] = dco_calibrate(8000); /* 8MHz */
-    backup_segment_a[INDEX_12MHZ] = dco_calibrate(12000); /* 12MHz */
-    backup_segment_a[INDEX_16MHZ] = dco_calibrate(16000); /* 16MHz */
-#else
-    backup_segment_a[INDEX_1MHZ] = dco_calibrate(1000); /* 1MHz */
-    backup_segment_a[INDEX_8MHZ] = dco_calibrate(8000); /* 8MHz */
-    backup_segment_a[INDEX_2MHZ] = dco_calibrate(2000); /* 2MHz */
-    backup_segment_a[INDEX_4MHZ] = dco_calibrate(4000); /* 4MHz */
-#endif
+    backup_segment_a[INDEX_FREQ2] = dco_calibrate(FREQ2_KHZ);
+    backup_segment_a[INDEX_FREQ3] = dco_calibrate(FREQ3_KHZ);
+    backup_segment_a[INDEX_FREQ4] = dco_calibrate(FREQ4_KHZ);
 
 #if defined(WRITE_TO_FLASH)
     flash_setup(backup_segment_a[INDEX_1MHZ]);
@@ -80,3 +76,12 @@ int main() {
         blink_led();
 #endif
 }
+
+/*
+ * Local Variables:
+ * c-file-style: "bsd"
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ * vim: set et ts=4 sw=4:
+ */

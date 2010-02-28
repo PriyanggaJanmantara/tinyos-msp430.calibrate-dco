@@ -1,3 +1,4 @@
+/* -*- mode: c; mode: flyspell-prog; -*- */
 /*
  * Copyright (C) 2010 Tadashi G. Takaoka
  *
@@ -36,3 +37,12 @@ static inline void delay_1000n(uint16_t n) {
         __asm__ __volatile__ ("nop"); /* 1 cycles */
     } while (--n != 0);         /* add, cmp, jnz: (1+1+2)=4 cycles */
 }
+
+/*
+ * Local Variables:
+ * c-file-style: "bsd"
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ * vim: set et ts=4 sw=4:
+ */
