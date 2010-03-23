@@ -137,7 +137,7 @@ void flash_write_block(const uint16_t *from, uint16_t *to, uint16_t words) {
         from += size;
         words -= size;
     }
-    flash_unlock_segment();
+    flash_lock_segment();
 }
 
 #if 0

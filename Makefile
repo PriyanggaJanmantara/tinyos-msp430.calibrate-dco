@@ -62,7 +62,7 @@ ERRATA_msp430x2132=BCL12 XOSC8
 ERRATA_msp430x2274=BCL12 DCOR
 
 CC=msp430-gcc
-CFLAGS+=-Os -Wall -mmcu=$(MCU) -mno-stack-init
+CFLAGS+=-O2 -Wall -mmcu=$(MCU) -mno-stack-init
 LDFLAGS+=-mmcu=$(MCU)
 
 ifneq ($(OPTION),)
