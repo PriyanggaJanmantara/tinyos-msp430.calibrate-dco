@@ -111,7 +111,8 @@ void dco_setup_calibrate() {
 #else
     BCSCTL3 = LFXT1S_0 | XCAP_2; /* LFXT1=32.768kHz, CAP=10pF */
 #endif
-    P2SEL |= 0xc0;
+    P2SEL |= 0xc0;              /* enable P2.6/XIN and P2.7/XOUT */
+    P2OUT |= 0x80;              /* some chips need P2.7 set as OUT */
 #endif
 
     /* turn on DCO and LFXT1 */

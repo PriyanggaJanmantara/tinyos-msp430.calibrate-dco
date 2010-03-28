@@ -22,7 +22,8 @@ TARGET=calibrate_dco
 # Options may be specified by OPTION variable in command line.
 #
 # WRITE_TO_FLASH
-#   if you want to erase the Segment A flash and write the
+#   if you want to erase the Segment A flash and write the calibrated
+#   value into Segment A.
 #
 # USE_ROSC
 #   if you want to use external Rosc.
