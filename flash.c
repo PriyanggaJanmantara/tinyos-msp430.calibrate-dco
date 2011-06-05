@@ -30,6 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
+
 #include "flash.h"
 #include "dco.h"
 #include "copy.h"

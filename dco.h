@@ -30,7 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <io.h>
+#include <msp430.h>
+#include <stdint.h>
 
 #if defined(__MSP430_HAS_BC2__) && !defined(USE_ROSC)
 static const uint8_t RSEL_MASK = RSEL3|RSEL2|RSEL1|RSEL0;
