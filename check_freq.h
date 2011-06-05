@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <io.h>
+#include <msp430.h>
 
 #if defined(__MSP430_HAS_BC2__)
 
