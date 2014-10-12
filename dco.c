@@ -41,40 +41,45 @@
 #error "LFXT1_HZ is too high"
 #endif
 
-void dco_set(uint16_t calib) {
+void dco_set(const uint16_t calib) {
+    const uint8_t old_bc1 = BCSCTL1;
+    const uint8_t bc1_flags = old_bc1 & ~RSEL_MASK;
 #if defined(ERRATA_BCL12)
-    /* Errata BCL12 - Switching RSEL can cause DCO dead time
+    /*
+     * Errata BCL12 - Switching RSEL can cause DCO dead time
      *  RSEL=14..15 -> RSEL=0..12 : switch to 13 first, then to target RSEL
-     *  RSEL=0..12  -> RSEL=13..15: set DCO to 0 first, then set target RSEL, and set DCO. */
-    uint8_t old_bc1 = BCSCTL1;
-    uint8_t cur_rsel = old_bc1 & RSEL_MASK;
-    uint8_t new_rsel = calib2rsel(calib);
-    old_bc1 &= ~RSEL_MASK;
+     *  RSEL=0..12  -> RSEL=13..15: set DCO to 0 first, then set target RSEL, and set DCO.
+     */
+    const uint8_t cur_rsel = old_bc1 & RSEL_MASK;
+    const uint8_t new_rsel = calib2rsel(calib);
     if (cur_rsel >= 14 && new_rsel <= 12) {
-        BCSCTL1 = old_bc1 | 13;
-        BCSCTL1 = old_bc1 | new_rsel;
-        DCOCTL = calib2dco(calib);
-    } else {
+        BCSCTL1 = bc1_flags | 13;
+        BCSCTL1 = bc1_flags | new_rsel;
+    } else if (cur_rsel <= 12 && new_rsel >= 13) {
         DCOCTL &= ~(DCO2|DCO1|DCO0); /* DCO=0 */
-        BCSCTL1 = old_bc1 | new_rsel;
-        DCOCTL = calib2dco(calib);
+        BCSCTL1 = bc1_flags | new_rsel;
+    } else {
+        BCSCTL1 = bc1_flags | new_rsel;
     }
+    DCOCTL = calib2dco(calib);
 #elif defined(ERRATA_BCL5)
-    /* Errata BCL5 - RSEL bit modification can generate high frequency spikes on MCLK
+    /*
+     * Errata BCL5 - RSEL bit modification can generate high frequency spikes on MCLK
      *  DIVM=0 or 1 cause this issue.
-     * Setting DIVM=2 or 3 and modify RSEL and restore DIVM will work. */
-    uint8_t old_bc2 = BCSCTL2;
+     * Setting DIVM=2 or 3 and modify RSEL and restore DIVM will work.
+     */
+    const uint8_t old_bc2 = BCSCTL2;
     BCSCTL2 |= DIVM1;
-    BCSCTL1 = (BCSCTL1 & ~RSEL_MASK) | calib2rsel(calib);
+    BCSCTL1 = bc1_flags | calib2rsel(calib);
     DCOCTL = calib2dco(calib);
     BCSCTL2 = old_bc2;
 #else
-    BCSCTL1 = (BCSCTL1 & ~RSEL_MASK) | calib2rsel(calib);
+    BCSCTL1 = bc1_flags | calib2rsel(calib);
     DCOCTL = calib2dco(calib);
 #endif
 }
 
-static uint16_t dco_fine(uint16_t calib, uint16_t dco_khz) {
+static uint16_t dco_fine(const uint16_t calib, const uint16_t dco_khz) {
     dco_set(calib);
     P1OUT ^= 1;
     TACTL |= TACLR;             /* clear TAR */
@@ -82,7 +87,7 @@ static uint16_t dco_fine(uint16_t calib, uint16_t dco_khz) {
     return TAR;
 }
 
-static uint16_t dco_coarse(uint16_t calib, uint16_t dco_khz) {
+static uint16_t dco_coarse(const uint16_t calib, const uint16_t dco_khz) {
     dco_set(calib);
     P1OUT ^= 1;
     TACTL |= TACLR;             /* clear TAR */
@@ -90,7 +95,7 @@ static uint16_t dco_coarse(uint16_t calib, uint16_t dco_khz) {
     return TAR;
 }
 
-uint16_t dco_calibrate(uint16_t dco_khz) {
+uint16_t dco_calibrate(const uint16_t dco_khz) {
     uint16_t calib = 0;
     uint16_t step;
     for (step = rsel2calib(RSEL_MAXBIT); step >= DCO0; step >>= 1) {

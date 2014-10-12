@@ -42,7 +42,7 @@ uint16_t code_in_ram[18];
 static void flash_lock_segment(void) __attribute__ ((noinline));
 static void flash_lock_segment(void) {
 #if defined(__MSP430_HAS_FLASH2__)
-    uint16_t lock_bits = (FCTL3 & LOCKA) ^ LOCKA;
+    const uint16_t lock_bits = (FCTL3 & LOCKA) ^ LOCKA;
     FCTL3 = FWKEY | LOCK | lock_bits;
 #else
     FCTL3 = FWKEY | LOCK;
@@ -52,14 +52,14 @@ static void flash_lock_segment(void) {
 static void flash_unlock_segment(void) __attribute__ ((noinline));
 static void flash_unlock_segment(void) {
 #if defined(__MSP430_HAS_FLASH2__)
-    uint16_t lock_bits = FCTL3 & LOCKA;
+    const uint16_t lock_bits = FCTL3 & LOCKA;
     FCTL3 = FWKEY | lock_bits;
 #else
     FCTL3 = FWKEY;
 #endif
 }
 
-void flash_setup(uint16_t calibrated_1mhz_dco) {
+void flash_setup(const uint16_t calibrated_1mhz_dco) {
     dco_set(calibrated_1mhz_dco);
     FCTL2 = FWKEY | FSSEL_1 | (3 - 1); /* fFTG=MCLK/3=333kHz */
 }
@@ -110,9 +110,9 @@ void flash_erase_mass() {
 }
 
 #if CODE_IN_FLASH
-static void do_block_write(uint16_t *to, const uint16_t *from, uint16_t *end)
+static void do_block_write(uint16_t *to, const uint16_t *from, const uint16_t const *end)
     __attribute__ ((noinline));
-static void do_block_write(uint16_t *to, const uint16_t *from, uint16_t *end) {
+static void do_block_write(uint16_t *to, const uint16_t *from, const uint16_t const *end) {
     FCTL1 = FWKEY | BLKWRT | WRT; /* enable block write */
     while (to < end) {
         *to++ = *from++;
@@ -124,7 +124,7 @@ static void do_block_write(uint16_t *to, const uint16_t *from, uint16_t *end) {
         ;
 }
 #else
-typedef void (*do_block_write_t)(uint16_t *to, const uint16_t *from, uint16_t *end);
+typedef void (*do_block_write_t)(uint16_t *to, const uint16_t *from, const uint16_t const *end);
 #define do_block_write(to, from, end)                                   \
     do {                                                                \
         copy_word(code_in_ram, do_block_write_body, ARRAY_SIZE(do_block_write_body)); \
@@ -148,7 +148,7 @@ static const uint16_t do_block_write_body[] = {
 void flash_write_block(const uint16_t *from, uint16_t *to, uint16_t words) {
     flash_unlock_segment();
     while (words > 0) {
-        uint16_t size = (words < 32) ? words : 32;
+        const uint16_t size = (words < 32) ? words : 32;
         do_block_write(to, from, to + size);
         to += size;
         from += size;
@@ -158,7 +158,7 @@ void flash_write_block(const uint16_t *from, uint16_t *to, uint16_t words) {
 }
 
 #if 0
-void flash_write_word(uint16_t data, uintptr_t addr) {
+void flash_write_word(const uint16_t data, const uintptr_t addr) {
     flash_unlock_segment();
     FCTL1 = FWKEY | WRT;
     *(uint16_t *)addr = data;
